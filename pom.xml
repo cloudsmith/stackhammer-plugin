@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.jenkins-ci.plugins</groupId>
+		<artifactId>plugin</artifactId>
+		<version>1.424</version>
+	</parent>
+
+	<groupId>org.cloudsmith.hammer</groupId>
+	<artifactId>stackhammer-plugin</artifactId>
+	<packaging>hpi</packaging>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>StackHammer plugin</name>
+	<url>http://wiki.jenkins-ci.org/display/JENKINS/StackHammer+Plugin</url>
+	<developers>
+		<developer>
+			<id>thallgren</id>
+			<name>Thomas Hallgren</name>
+			<email>thomas@tada.se</email>
+		</developer>
+	</developers>
+
+	<distributionManagement>
+		<repository>
+			<id>maven.jenkins-ci.org</id>
+			<url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+		</repository>
+	</distributionManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cloudsmith.hammer</groupId>
+			<artifactId>hammer-api</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+
+	<scm>
+		<connection>scm:git:git://github.com/cloudsmith/stackhammer-plugin.git</connection>
+		<developerConnection>scm:git:git@github.com:cloudsmith/stackhammer-plugin.git</developerConnection>
+		<url>https://github.com/cloudsmith/stackhammer-plugin</url>
+	</scm>
+
+	<properties>
+		<java.net.id>thhal</java.net.id>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</pluginRepository>
+	</pluginRepositories>
+</project>  
+ 

@@ -1,0 +1,11 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <!--
+    This Jelly script is used to produce the global configuration option.
+  -->
+  <f:section title="Stack Hammer Validator">
+    <f:entry title="Server URL" field="serverURL"
+      description="The base URL for the Stack Hammer server">
+      <f:textbox />
+    </f:entry>
+  </f:section>
+</j:jelly>
