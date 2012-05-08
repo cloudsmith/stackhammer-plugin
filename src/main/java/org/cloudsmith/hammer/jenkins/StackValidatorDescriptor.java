@@ -132,7 +132,7 @@ public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder>
 	 */
 	@Override
 	public String getDisplayName() {
-		return "Stack Hammer Validator Configuration";
+		return "Stack Hammer Validation";
 	}
 
 	/**
