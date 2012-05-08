@@ -8,7 +8,7 @@
  * Contributors:
  *   Thomas Hallgren (Cloudsmith Inc.) - initial API and implementation
  */
-package org.cloudsmith.hammer.jenkins;
+package org.cloudsmith.jenkins.stackhammer;
 
 import hudson.Launcher;
 import hudson.model.BuildListener;
@@ -18,15 +18,14 @@ import hudson.tasks.Builder;
 import java.io.PrintStream;
 import java.net.URI;
 
-import org.cloudsmith.hammer.api.StackHammerModule;
-import org.cloudsmith.hammer.api.model.Diagnostic;
-import org.cloudsmith.hammer.api.model.Provider;
-import org.cloudsmith.hammer.api.model.Repository;
-import org.cloudsmith.hammer.api.model.ResultWithDiagnostic;
-import org.cloudsmith.hammer.api.service.RepositoryService;
-import org.cloudsmith.hammer.api.service.StackHammerFactory;
-import org.cloudsmith.hammer.api.service.StackService;
-import org.cloudsmith.hammer.jenkins.util.BuildData;
+import org.cloudsmith.stackhammer.api.StackHammerModule;
+import org.cloudsmith.stackhammer.api.model.Diagnostic;
+import org.cloudsmith.stackhammer.api.model.Provider;
+import org.cloudsmith.stackhammer.api.model.Repository;
+import org.cloudsmith.stackhammer.api.model.ResultWithDiagnostic;
+import org.cloudsmith.stackhammer.api.service.RepositoryService;
+import org.cloudsmith.stackhammer.api.service.StackHammerFactory;
+import org.cloudsmith.stackhammer.api.service.StackService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.inject.Guice;

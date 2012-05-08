@@ -1,4 +1,4 @@
-package org.cloudsmith.hammer.jenkins.util;
+package org.cloudsmith.jenkins.stackhammer;
 
 import hudson.Functions;
 import hudson.model.Action;
@@ -15,9 +15,9 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.cloudsmith.hammer.api.model.Diagnostic;
-import org.cloudsmith.hammer.api.model.Repository;
-import org.cloudsmith.hammer.api.model.ResultWithDiagnostic;
+import org.cloudsmith.stackhammer.api.model.Diagnostic;
+import org.cloudsmith.stackhammer.api.model.Repository;
+import org.cloudsmith.stackhammer.api.model.ResultWithDiagnostic;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.ExportedBean;

@@ -9,7 +9,7 @@
  *   Thomas Hallgren (Cloudsmith Inc.) - initial API and implementation
  */
 
-package org.cloudsmith.hammer.jenkins;
+package org.cloudsmith.jenkins.stackhammer;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
