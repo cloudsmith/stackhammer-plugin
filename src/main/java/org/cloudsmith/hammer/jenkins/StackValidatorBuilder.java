@@ -10,17 +10,15 @@
  */
 package org.cloudsmith.hammer.jenkins;
 
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.tasks.Builder;
 
-import java.io.ByteArrayInputStream;
 import java.io.PrintStream;
 import java.net.URI;
 
-import org.apache.commons.codec.binary.Base64;
+import org.cloudsmith.hammer.api.StackHammerModule;
 import org.cloudsmith.hammer.api.model.Diagnostic;
 import org.cloudsmith.hammer.api.model.Provider;
 import org.cloudsmith.hammer.api.model.Repository;
@@ -28,6 +26,7 @@ import org.cloudsmith.hammer.api.model.ResultWithDiagnostic;
 import org.cloudsmith.hammer.api.service.RepositoryService;
 import org.cloudsmith.hammer.api.service.StackHammerFactory;
 import org.cloudsmith.hammer.api.service.StackService;
+import org.cloudsmith.hammer.jenkins.util.BuildData;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.inject.Guice;
@@ -84,14 +83,19 @@ public class StackValidatorBuilder extends Builder {
 			Injector injector = Guice.createInjector(new StackHammerModule(
 				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey()));
 
+			BuildData data = new BuildData(build, "stackhammer");
+			build.addAction(data);
+
 			StackHammerFactory factory = injector.getInstance(StackHammerFactory.class);
 			RepositoryService repoService = factory.createRepositoryService();
 			String[] splitName = getStackName().split("/");
 			String owner = splitName[0];
 			String name = splitName[1];
-			logger.format("Sending order to clone repository %s/%s to Stack Hammer%n", owner, name);
+			logger.format("Sending order to clone repository %s/%s to Stack Hammer Service%n", owner, name);
 			ResultWithDiagnostic<Repository> cloneResult = repoService.cloneRepository(
 				Provider.GITHUB, owner, name, branch);
+
+			data.setCloneDiagnostic(cloneResult);
 
 			if(cloneResult.getSeverity() == Diagnostic.ERROR) {
 				listener.error(cloneResult.toString());
@@ -104,18 +108,11 @@ public class StackValidatorBuilder extends Builder {
 			ResultWithDiagnostic<String> validationResult = stackService.validateStack(repo, repo.getOwner() + "/" +
 					repo.getName());
 
+			data.setValidationDiagnostic(validationResult);
+
 			if(validationResult.getSeverity() == Diagnostic.ERROR) {
 				listener.error(validationResult.toString());
 				return false;
-			}
-
-			String svgStr = validationResult.getResult();
-			if(svgStr != null) {
-				FilePath ws = build.getWorkspace();
-				FilePath stackDir = ws.child(owner).child(name);
-				stackDir.mkdirs();
-				FilePath svgImg = stackDir.child("graph.svg");
-				svgImg.copyFrom(new ByteArrayInputStream(Base64.decodeBase64(svgStr)));
 			}
 		}
 		catch(Exception e) {

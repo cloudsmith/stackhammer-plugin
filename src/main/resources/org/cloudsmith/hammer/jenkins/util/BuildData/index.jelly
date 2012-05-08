@@ -1,0 +1,22 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<l:layout title="Stack Hammer">
+		<l:main-panel>
+			<h1>Stack Hammer Validation Result</h1>
+			<h2>Validation Diagnostics</h2>
+			<table>
+				<j:forEach var="diag" items="${it.validationDiagnostics}">
+					<j:if test="${diag.resourcePath != null}">
+						<tr>
+							<td>${diag.severityString}:</td>
+							<td><a href="${it.stackBase}${diag.resourcePath}">${diag.resourcePath}</a> :</td>
+							<td>${diag.message}</td>
+						</tr>
+					</j:if>
+				</j:forEach>
+			</table>
+			<h2>Validation Graph</h2>
+			<embed src="${it.validationGraphURL}"/>
+		</l:main-panel>
+	</l:layout>
+</j:jelly>
