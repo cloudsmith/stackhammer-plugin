@@ -5,14 +5,24 @@ import hudson.model.Action;
 import hudson.model.AbstractBuild;
 import hudson.model.Api;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.codec.binary.Base64;
 import org.cloudsmith.stackhammer.api.model.Diagnostic;
@@ -21,6 +31,9 @@ import org.cloudsmith.stackhammer.api.model.ResultWithDiagnostic;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.ExportedBean;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 @ExportedBean(defaultVisibility = 999)
 public class BuildData implements Action, Serializable, Cloneable {
@@ -33,6 +46,35 @@ public class BuildData implements Action, Serializable, Cloneable {
 	private ResultWithDiagnostic<Repository> cloneDiagnostic;
 
 	private ResultWithDiagnostic<String> validationDiagnostic;
+
+	// @fmtOff
+	private static final String XSL_TO_STRIP_FIXED_SIZE = 
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+	"<transform version=\"1.0\" xmlns=\"http://www.w3.org/1999/XSL/Transform\" xmlns:svg=\"http://www.w3.org/2000/svg\">\n"
+		+	"	<output method=\"xml\" encoding=\"UTF-8\" omit-xml-declaration=\"no\"/>"
+		+	"	<template match=\"svg:svg/@width\"/>\n"
+		+	"	<template match=\"svg:svg/@height\"/>\n"
+		+	"	<template match=\"node()|@*\">\n"
+		+	"		<copy>\n"
+		+ 	"			<apply-templates select=\"@*|node()\" />\n"
+		+	"		</copy>\n"
+		+	"	</template>\n"
+		+	"</transform>\n";
+
+	// @fmtOn
+
+	private static final Templates STRIP_FIXED_SIZE_TEMPLATE;
+
+	static {
+		TransformerFactory tFactory = TransformerFactory.newInstance();
+		try {
+			STRIP_FIXED_SIZE_TEMPLATE = tFactory.newTemplates(new StreamSource(
+				new StringReader(XSL_TO_STRIP_FIXED_SIZE)));
+		}
+		catch(TransformerConfigurationException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
 	public BuildData(AbstractBuild<?, ?> build, String pluginName) {
 		this.build = build;
@@ -51,14 +93,26 @@ public class BuildData implements Action, Serializable, Cloneable {
 		return clone;
 	}
 
-	public void doDiag(StaplerRequest req, StaplerResponse rsp) throws IOException {
+	/**
+	 * Method called by the Stapler dispatcher. It is automatically detected
+	 * when the dispatcher looks for methods that starts with &quot;do&quot;
+	 * The method doValidation corresponds to the path <build>/stackhammer/validation/
+	 * 
+	 * @param req
+	 * @param rsp
+	 * @throws IOException
+	 */
+	public void doValidation(StaplerRequest req, StaplerResponse rsp) throws IOException {
 		String name = req.getRestOfPath(); // Remove leading /
-		if("/clone.txt".equals(name)) {
-			if(cloneDiagnostic != null) {
-				rsp.setContentType("text/plain");
-				PrintWriter out = rsp.getWriter();
+		if("/graph.svg".equals(name)) {
+			if(validationDiagnostic != null && validationDiagnostic.getResult() != null) {
+				rsp.setContentType("image/svg+xml");
+				OutputStream out = rsp.getOutputStream();
 				try {
-					out.println(cloneDiagnostic);
+					byte[] svgData = Base64.decodeBase64(validationDiagnostic.getResult());
+					svgData = stripFixedSize(svgData);
+					rsp.setContentLength(svgData.length);
+					out.write(svgData);
 					return;
 				}
 				finally {
@@ -66,8 +120,8 @@ public class BuildData implements Action, Serializable, Cloneable {
 				}
 			}
 		}
-		if("/validation.txt".equals(name)) {
-			if(cloneDiagnostic != null) {
+		if("/diagnostics.txt".equals(name)) {
+			if(validationDiagnostic != null) {
 				rsp.setContentType("text/plain");
 				PrintWriter out = rsp.getWriter();
 				try {
@@ -82,47 +136,12 @@ public class BuildData implements Action, Serializable, Cloneable {
 		rsp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
-	/**
-	 * Method called by the Stapler dispatcher. It is automatically detected
-	 * when the dispatcher looks for methods that starts with &quot;do&quot;
-	 * The method doGraph corresponds to the path <build>/stackhammer/graph/
-	 * 
-	 * @param req
-	 * @param rsp
-	 * @throws IOException
-	 */
-	public void doGraph(StaplerRequest req, StaplerResponse rsp) throws IOException {
-		String name = req.getRestOfPath(); // Remove leading /
-		if("/validation.svg".equals(name)) {
-			if(validationDiagnostic != null && validationDiagnostic.getResult() != null) {
-				rsp.setContentType("image/svg+xml");
-				OutputStream out = rsp.getOutputStream();
-				try {
-					byte[] svgData = Base64.decodeBase64(validationDiagnostic.getResult());
-					rsp.setContentLength(svgData.length);
-					out.write(svgData);
-					return;
-				}
-				finally {
-					out.close();
-				}
-			}
-		}
-		rsp.sendError(HttpServletResponse.SC_NOT_FOUND);
-	}
-
 	public Api getApi() {
 		return new Api(this);
 	}
 
-	public String getCloneDiagURL() {
-		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? "diag/clone.txt"
-				: null;
-	}
-
 	public String getDisplayName() {
-		return "Validation Result";
+		return "Validation Diagnostics";
 	}
 
 	public String getIconFileName() {
@@ -145,7 +164,7 @@ public class BuildData implements Action, Serializable, Cloneable {
 
 	public String getSummaryValidationGraphURL() {
 		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? getUrlFor("graph/validation.svg")
+				? getUrlFor("validation/graph.svg")
 				: null;
 	}
 
@@ -166,13 +185,13 @@ public class BuildData implements Action, Serializable, Cloneable {
 
 	public String getValidationDiagURL() {
 		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? "diag/validation.txt"
+				? "validation/diagnostics.txt"
 				: null;
 	}
 
 	public String getValidationGraphURL() {
 		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? "graph/validation.svg"
+				? "validation/graph.svg"
 				: null;
 	}
 
@@ -188,5 +207,23 @@ public class BuildData implements Action, Serializable, Cloneable {
 	 */
 	public void setValidationDiagnostic(ResultWithDiagnostic<String> validationDiagnostic) {
 		this.validationDiagnostic = validationDiagnostic;
+	}
+
+	private byte[] stripFixedSize(byte[] bytes) {
+		try {
+			Transformer transformer = STRIP_FIXED_SIZE_TEMPLATE.newTransformer();
+			ByteArrayOutputStream result = new ByteArrayOutputStream();
+			XMLReader reader = XMLReaderFactory.createXMLReader();
+			reader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+			SAXSource saxSource = new SAXSource(reader, new InputSource(new ByteArrayInputStream(bytes)));
+			transformer.transform(saxSource, new StreamResult(result));
+			return result.toByteArray();
+		}
+		catch(RuntimeException e) {
+			throw e;
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

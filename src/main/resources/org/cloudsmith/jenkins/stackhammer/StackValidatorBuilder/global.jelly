@@ -2,12 +2,8 @@
   <!--
     This Jelly script is used to produce the global configuration option.
   -->
-  <f:section title="Stack Hammer Validator">
-    <f:entry title="Web URL" field="webURL"
-      description="The base URL for the Stack Hammer Web User Interface">
-      <f:textbox />
-    </f:entry>
-    <f:entry title="Server URL" field="serverURL"
+  <f:section title="Stack Hammer">
+    <f:entry title="Stack Hammer URL" field="serverURL"
       description="The base URL for the Stack Hammer server">
       <f:textbox />
     </f:entry>

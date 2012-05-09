@@ -40,8 +40,6 @@ import org.kohsuke.stapler.StaplerRequest;
 public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder> {
 	private String serverURL;
 
-	private String webURL;
-
 	public StackValidatorDescriptor() {
 		super(StackValidatorBuilder.class);
 		load();
@@ -50,7 +48,6 @@ public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder>
 	@Override
 	public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
 		serverURL = formData.getString("serverURL");
-		webURL = formData.getString("webURL");
 		save();
 		return super.configure(req, formData);
 	}
@@ -103,31 +100,6 @@ public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder>
 	}
 
 	/**
-	 * Performs on-the-fly validation of the form field 'serverURL'.
-	 * 
-	 * @param value
-	 *        This parameter receives the value that the user has typed.
-	 * @return
-	 *         Indicates the outcome of the validation. This is sent to the browser.
-	 */
-	public FormValidation doCheckWebURL(@QueryParameter String value) throws IOException, ServletException {
-		if(value.length() == 0)
-			// This is OK, we'll use the default
-			return FormValidation.ok();
-
-		try {
-			URI uri = new URI(value);
-			String scheme = uri.getScheme();
-			if("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
-				return FormValidation.ok();
-			return FormValidation.error("The Web URL must use http or https");
-		}
-		catch(URISyntaxException e) {
-			return FormValidation.error("The Web URL is not syntactially correct: %s", e.getMessage());
-		}
-	}
-
-	/**
 	 * This human readable name is used in the configuration screen.
 	 */
 	@Override
@@ -140,13 +112,6 @@ public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder>
 	 */
 	public String getServerURL() {
 		return serverURL;
-	}
-
-	/**
-	 * This method returns the webURL of the global configuration.
-	 */
-	public String getWebURL() {
-		return webURL;
 	}
 
 	/**
