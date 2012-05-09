@@ -53,7 +53,7 @@
 			</j:choose>
 			<h2>Dependency Graph</h2>
 			<a href="javascript:showOrHideElement('validationGraph')">hide/expand the graph</a><br/>
-			<object id="validationGraph" data="${it.validationGraphURL}" width="80%"/>
+			<object id="validationGraph" data="${it.validationGraphURL}" width="98%"/>
 		</l:main-panel>
 	</l:layout>
 </j:jelly>
