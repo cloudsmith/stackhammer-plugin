@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.Collections;
@@ -40,8 +39,6 @@ public class BuildData implements Action, Serializable, Cloneable {
 	private static final long serialVersionUID = 264848698476660935L;
 
 	private final AbstractBuild<?, ?> build;
-
-	private final String pluginName;
 
 	private ResultWithDiagnostic<Repository> cloneDiagnostic;
 
@@ -76,9 +73,8 @@ public class BuildData implements Action, Serializable, Cloneable {
 		}
 	}
 
-	public BuildData(AbstractBuild<?, ?> build, String pluginName) {
+	public BuildData(AbstractBuild<?, ?> build) {
 		this.build = build;
-		this.pluginName = pluginName;
 	}
 
 	@Override
@@ -96,41 +92,26 @@ public class BuildData implements Action, Serializable, Cloneable {
 	/**
 	 * Method called by the Stapler dispatcher. It is automatically detected
 	 * when the dispatcher looks for methods that starts with &quot;do&quot;
-	 * The method doValidation corresponds to the path <build>/stackhammer/validation/
+	 * The method doValidation corresponds to the path <build>/stackhammerValidation/dependencyGraph
 	 * 
 	 * @param req
 	 * @param rsp
 	 * @throws IOException
 	 */
-	public void doValidation(StaplerRequest req, StaplerResponse rsp) throws IOException {
-		String name = req.getRestOfPath(); // Remove leading /
-		if("/graph.svg".equals(name)) {
-			if(validationDiagnostic != null && validationDiagnostic.getResult() != null) {
-				rsp.setContentType("image/svg+xml");
-				OutputStream out = rsp.getOutputStream();
-				try {
-					byte[] svgData = Base64.decodeBase64(validationDiagnostic.getResult());
-					svgData = stripFixedSize(svgData);
-					rsp.setContentLength(svgData.length);
-					out.write(svgData);
-					return;
-				}
-				finally {
-					out.close();
-				}
+	public void doDependencyGraph(StaplerRequest req, StaplerResponse rsp) throws IOException {
+		String name = req.getRestOfPath();
+		if((name == null || name.isEmpty()) && validationDiagnostic != null && validationDiagnostic.getResult() != null) {
+			rsp.setContentType("image/svg+xml");
+			OutputStream out = rsp.getOutputStream();
+			try {
+				byte[] svgData = Base64.decodeBase64(validationDiagnostic.getResult());
+				svgData = stripFixedSize(svgData);
+				rsp.setContentLength(svgData.length);
+				out.write(svgData);
+				return;
 			}
-		}
-		if("/diagnostics.txt".equals(name)) {
-			if(validationDiagnostic != null) {
-				rsp.setContentType("text/plain");
-				PrintWriter out = rsp.getWriter();
-				try {
-					out.println(validationDiagnostic);
-					return;
-				}
-				finally {
-					out.close();
-				}
+			finally {
+				out.close();
 			}
 		}
 		rsp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -145,11 +126,7 @@ public class BuildData implements Action, Serializable, Cloneable {
 	}
 
 	public String getIconFileName() {
-		return Functions.getResourcePath() + "/plugin/" + pluginName + "/icons/hammer-32x32.png";
-	}
-
-	public String getPluginName() {
-		return pluginName;
+		return Functions.getResourcePath() + "/plugin/stackhammer/icons/hammer-32x32.png";
 	}
 
 	public String getStackBase() {
@@ -164,7 +141,7 @@ public class BuildData implements Action, Serializable, Cloneable {
 
 	public String getSummaryValidationGraphURL() {
 		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? getUrlFor("validation/graph.svg")
+				? getUrlFor("dependencyGraph")
 				: null;
 	}
 
@@ -174,7 +151,7 @@ public class BuildData implements Action, Serializable, Cloneable {
 
 	@Override
 	public String getUrlName() {
-		return getPluginName();
+		return "stackhammerValidation";
 	}
 
 	public List<Diagnostic> getValidationDiagnostics() {
@@ -183,15 +160,9 @@ public class BuildData implements Action, Serializable, Cloneable {
 				: validationDiagnostic.getChildren();
 	}
 
-	public String getValidationDiagURL() {
-		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? "validation/diagnostics.txt"
-				: null;
-	}
-
 	public String getValidationGraphURL() {
 		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? "validation/graph.svg"
+				? "dependencyGraph"
 				: null;
 	}
 

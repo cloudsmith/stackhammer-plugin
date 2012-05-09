@@ -82,7 +82,7 @@ public class StackValidatorBuilder extends Builder {
 			Injector injector = Guice.createInjector(new StackHammerModule(
 				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey()));
 
-			BuildData data = new BuildData(build, "stackhammer");
+			BuildData data = new BuildData(build);
 			build.addAction(data);
 
 			StackHammerFactory factory = injector.getInstance(StackHammerFactory.class);
