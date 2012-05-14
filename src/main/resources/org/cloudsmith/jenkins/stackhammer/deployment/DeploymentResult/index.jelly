@@ -1,0 +1,63 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+	<l:layout title="Stack Hammer">
+		<l:main-panel>
+			<script type="text/javascript">
+				function showOrHideElement(id) {
+				var element =
+				document.getElementById(id);
+				if
+				(document.getElementById(id).style.display == "none") {
+				document.getElementById(id).style.display = "";
+				} else if
+				(document.getElementById(id).style.display == "") {
+				document.getElementById(id).style.display = "none";
+				}
+				}
+			</script>
+
+			<h1>Stack Hammer Deployment Results</h1>
+			<j:choose>
+				<j:when test="${it.hostEntryCount != 0}">
+					<j:forEach var="hostEntry" items="${it.hostEntries}">
+						<a href="javascript:showOrHideElement('host-${hostEntry.name}')">hide/expand host &quot;${hostEntry.name}&quot;</a>
+						<div id="host-${hostEntry.name}">
+							<h2>${hostEntry.displayName}</h2>
+							<h3>Deployment Log</h3>
+							<j:choose>
+								<j:when test="${hostEntry.logEntryCount != 0}">
+									<table border="1px" class="pane sortable">
+										<thead>
+											<tr>
+												<td class="pane-header">Severity</td>
+												<td class="pane-header">Message</td>
+											</tr>
+										</thead>
+										<tbody>
+											<j:forEach var="logEntry" items="${hostEntry.logEntries}">
+												<tr>
+													<td>${logEntry.severityString}</td>
+													<td>${logEntry.message}</td>
+												</tr>
+											</j:forEach>
+										</tbody>
+									</table>
+								</j:when>
+								<j:otherwise>The deploy did not produce any log output
+								</j:otherwise>
+							</j:choose>
+							<j:if test="${hostEntry.catalogGraphURL != null}">
+								<h2>Catalog Graph</h2>
+								<a href="${hostEntry.catalogGraphURL}">Catalog Graph</a>
+							</j:if>
+						</div>
+					</j:forEach>
+				</j:when>
+				<j:otherwise>
+					No host produced any deployment results
+				</j:otherwise>
+			</j:choose>
+		</l:main-panel>
+	</l:layout>
+</j:jelly>

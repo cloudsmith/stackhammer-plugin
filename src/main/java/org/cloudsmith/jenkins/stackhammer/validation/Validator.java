@@ -8,7 +8,7 @@
  * Contributors:
  *   Thomas Hallgren (Cloudsmith Inc.) - initial API and implementation
  */
-package org.cloudsmith.jenkins.stackhammer;
+package org.cloudsmith.jenkins.stackhammer.validation;
 
 import hudson.Launcher;
 import hudson.model.BuildListener;
@@ -34,7 +34,7 @@ import com.google.inject.Injector;
 /**
  * A {@link Builder} that performs Stack Hammer Validation
  */
-public class StackValidatorBuilder extends Builder {
+public class Validator extends Builder {
 
 	private final String branch;
 
@@ -43,7 +43,7 @@ public class StackValidatorBuilder extends Builder {
 	private final String accessKey;
 
 	@DataBoundConstructor
-	public StackValidatorBuilder(String stackName, String branch, String accessKey) {
+	public Validator(String stackName, String branch, String accessKey) {
 		this.stackName = stackName;
 		this.branch = branch;
 		this.accessKey = accessKey;
@@ -58,8 +58,8 @@ public class StackValidatorBuilder extends Builder {
 	}
 
 	@Override
-	public StackValidatorDescriptor getDescriptor() {
-		return (StackValidatorDescriptor) super.getDescriptor();
+	public ValidationDescriptor getDescriptor() {
+		return (ValidationDescriptor) super.getDescriptor();
 	}
 
 	public String getStackName() {
@@ -72,7 +72,7 @@ public class StackValidatorBuilder extends Builder {
 			PrintStream logger = listener.getLogger();
 			String serverURL = getDescriptor().getServerURL();
 			if(serverURL == null)
-				serverURL = "https://stackhammer.cloudsmith.com:443/api";
+				serverURL = "https://stackservice.cloudsmith.com/service/api";
 
 			URI uri = URI.create(serverURL);
 			logger.format(
@@ -82,7 +82,7 @@ public class StackValidatorBuilder extends Builder {
 			Injector injector = Guice.createInjector(new StackHammerModule(
 				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey()));
 
-			BuildData data = new BuildData(build);
+			ValidationResult data = new ValidationResult(build);
 			build.addAction(data);
 
 			StackHammerFactory factory = injector.getInstance(StackHammerFactory.class);
@@ -90,7 +90,9 @@ public class StackValidatorBuilder extends Builder {
 			String[] splitName = getStackName().split("/");
 			String owner = splitName[0];
 			String name = splitName[1];
-			logger.format("Sending order to clone repository %s/%s to Stack Hammer Service%n", owner, name);
+			logger.format(
+				"Verifying that a local clone of repository %s/%s[%s] exists at Stack Hammer Service%n", owner, name,
+				branch);
 			ResultWithDiagnostic<Repository> cloneResult = repoService.cloneRepository(
 				Provider.GITHUB, owner, name, branch);
 
@@ -100,10 +102,11 @@ public class StackValidatorBuilder extends Builder {
 				listener.error(cloneResult.toString());
 				return false;
 			}
-			logger.format("Clone of %s/%s was a success%n", owner, name);
 
 			StackService stackService = factory.createStackService();
 			Repository repo = cloneResult.getResult();
+
+			logger.format("Sending order to validate stack %s/%s%n", owner, name);
 			ResultWithDiagnostic<String> validationResult = stackService.validateStack(repo, repo.getOwner() + "/" +
 					repo.getName());
 

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>1.424</version>
+		<version>1.463</version>
 	</parent>
 
 	<groupId>org.cloudsmith.hammer.jenkins</groupId>
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>3.0</version>
+			<version>[3.0.0,4.0.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.cloudsmith.stackhammer</groupId>

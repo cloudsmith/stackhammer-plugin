@@ -1,3 +1,5 @@
+package org.cloudsmith.jenkins.stackhammer.validation;
+
 /**
  * Copyright (c) 2012 Cloudsmith Inc. and other contributors, as listed below.
  * All rights reserved. This program and the accompanying materials
@@ -9,11 +11,7 @@
  *   Thomas Hallgren (Cloudsmith Inc.) - initial API and implementation
  */
 
-package org.cloudsmith.jenkins.stackhammer;
-
 import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 
@@ -25,23 +23,24 @@ import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
+import org.cloudsmith.jenkins.stackhammer.common.StackOpDescriptor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * Descriptor for {@link StackValidatorBuilder}. Used as a singleton.
+ * Descriptor for {@link Validator}. Used as a singleton.
  * The class is marked as public so that it can be accessed from views.
  * 
  * <p>
- * See <tt>src/main/resources/com/cloudsmith/hammer/jenkins/StackValidatorBuilder/*.jelly</tt>
+ * See <tt>src/main/resources/com/cloudsmith/hammer/jenkins/validation/Validator/*.jelly</tt>
  * for the actual HTML fragment for the configuration screen.
  */
 @Extension
-public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder> {
+public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 	private String serverURL;
 
-	public StackValidatorDescriptor() {
-		super(StackValidatorBuilder.class);
+	public ValidationDescriptor() {
+		super(Validator.class);
 		load();
 	}
 
@@ -78,28 +77,6 @@ public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder>
 	}
 
 	/**
-	 * Performs on-the-fly validation of the form field 'stackName'.
-	 * 
-	 * @param value
-	 *        This parameter receives the value that the user has typed.
-	 * @return
-	 *         Indicates the outcome of the validation. This is sent to the browser.
-	 */
-	public FormValidation doCheckStackName(@QueryParameter String value) throws IOException, ServletException {
-		if(value.length() == 0)
-			return FormValidation.error("Please set a stack name");
-		String[] split = value.trim().split("/");
-		if(split.length == 2) {
-			String owner = split[0].trim();
-			String name = split[1].trim();
-			if(!(owner.isEmpty() || name.isEmpty())) {
-				return FormValidation.ok();
-			}
-		}
-		return FormValidation.error("Stack name must be in the form <owner>/<name>");
-	}
-
-	/**
 	 * This human readable name is used in the configuration screen.
 	 */
 	@Override
@@ -112,14 +89,5 @@ public final class StackValidatorDescriptor extends BuildStepDescriptor<Builder>
 	 */
 	public String getServerURL() {
 		return serverURL;
-	}
-
-	/**
-	 * Indicates that this builder can be used with all kinds of project types
-	 */
-	@SuppressWarnings("rawtypes")
-	@Override
-	public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-		return true;
 	}
 }
