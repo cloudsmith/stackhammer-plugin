@@ -13,15 +13,15 @@
 				</j:otherwise>
 			</j:choose>
 			<br/>
-			<h2>Errors and Warnings</h2>
+			<h2>Diagnostics</h2>
 			<j:choose>
 				<j:when test="${it.resultDiagnosticsCount != 0}">
-					<table id="validationDiagnosticsTable" border="1px" class="pane sortable">
+					<table id="validationDiagnosticsTable" border="1px" class="pane sortable" style="table-layout:fixed;">
 						<thead>
 							<tr>
-								<td class="pane-header">Severity</td>
+								<td class="pane-header" style="width:70px;">Severity</td>
 								<td class="pane-header">Description</td>
-								<td class="pane-header">Location</td>
+								<td class="pane-header" style="width:250px">Location</td>
 							</tr>
 						</thead>
 						<tbody>
@@ -29,14 +29,14 @@
 								<j:if test="${diag.resourcePath != null}">
 									<tr>
 										<td>${diag.severityString}</td>
-										<td>${diag.message}</td>
+										<td style="overflow:hidden;text-overflow:ellipsis">${diag.message}</td>
 										<td>
 											<j:choose>
 												<j:when test="${diag.line != 0}">
-													<a href="${it.stackBase}${diag.resourcePath}#L${diag.line}" target="_blank">${diag.resourcePath}: ${diag.line}</a>:
+													<a href="${it.stackBase}${diag.resourcePath}#L${diag.line}" target="_blank">${diag.resourcePath}: ${diag.line}</a>
 												</j:when>
 												<j:otherwise>
-													<a href="${it.stackBase}${diag.resourcePath}" target="_blank">${diag.resourcePath}</a>:
+													<a href="${it.stackBase}${diag.resourcePath}" target="_blank">${diag.resourcePath}</a>
 												</j:otherwise>
 											</j:choose>
 										</td>

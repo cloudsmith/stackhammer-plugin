@@ -4,15 +4,15 @@
   -->
   <f:section title="Stack Hammer">
     <f:entry title="Stack Hammer URL" field="serverURL"
-      description="The URL for the Stack Hammer service API">
+      description="The URL for the Stack Hammer service API.">
       <f:textbox />
     </f:entry>
     <f:entry title="Poll Interval" field="pollFrequency"
-      description="The number of seconds between polls for long-running operations.">
+      description="The number of seconds between polls for long-running operations. Defaults to 15 seconds.">
       <f:textbox />
     </f:entry>
-    <f:entry title="Operation Timeout" field="maxTime"
-      description="The maximum number of seconds to poll for completion of long-running operations.">
+    <f:entry title="Deployment Timeout" field="maxTime"
+      description="The maximum number of seconds to poll for completion of deployment operations.">
       <f:textbox />
     </f:entry>
   </f:section>

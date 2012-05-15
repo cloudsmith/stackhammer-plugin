@@ -16,6 +16,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.cloudsmith.jenkins.stackhammer.common.StackOpResult;
 import org.cloudsmith.stackhammer.api.model.CatalogGraph;
 import org.cloudsmith.stackhammer.api.model.LogEntry;
+import org.cloudsmith.stackhammer.api.model.MessageWithSeverity;
 import org.cloudsmith.stackhammer.api.model.ResultWithDiagnostic;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -73,7 +74,7 @@ public class DeploymentResult extends StackOpResult<List<CatalogGraph>> {
 			if(machineName == null)
 				return name;
 
-			return name + '[' + machineName + ']';
+			return name + " [" + machineName + ']';
 		}
 	}
 
@@ -275,7 +276,55 @@ public class DeploymentResult extends StackOpResult<List<CatalogGraph>> {
 	}
 
 	public String getSummary() {
-		return getSummary(getLogEntries());
+		int hostsWithErrors = 0;
+		int hostsWithWarnings = 0;
+		List<HostEntry> hosts = getHostEntries();
+		int hostCount = hosts.size();
+		if(hostCount == 0)
+			return "No hosts deployed";
+
+		for(int idx = 0; idx < hostCount; ++idx) {
+			boolean hasErrors = false;
+			boolean hasWarnings = false;
+			for(LogEntry le : hosts.get(idx).getLogEntries()) {
+				switch(le.getSeverity()) {
+					case MessageWithSeverity.FATAL:
+					case MessageWithSeverity.ERROR:
+						hasErrors = true;
+						break;
+					case MessageWithSeverity.WARNING:
+						hasWarnings = true;
+				}
+				if(hasErrors && hasWarnings)
+					break;
+			}
+			if(hasErrors)
+				hostsWithErrors++;
+			if(hasWarnings)
+				hostsWithWarnings++;
+		}
+
+		StringBuilder bld = new StringBuilder();
+		bld.append(hostCount);
+		bld.append("host");
+		if(hostCount > 1)
+			bld.append('s');
+		bld.append(" deployed");
+		if(hostsWithErrors > 0 || hostsWithWarnings > 0) {
+			bld.append('(');
+			if(hostsWithErrors > 0) {
+				bld.append(hostsWithErrors);
+				bld.append(" with errors");
+				if(hostsWithWarnings > 0)
+					bld.append(", ");
+			}
+			if(hostsWithWarnings > 0) {
+				bld.append(hostsWithWarnings);
+				bld.append(" with warnings");
+			}
+			bld.append(')');
+		}
+		return bld.toString();
 	}
 
 	@Override
