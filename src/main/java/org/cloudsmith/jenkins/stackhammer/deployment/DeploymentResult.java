@@ -306,12 +306,12 @@ public class DeploymentResult extends StackOpResult<List<CatalogGraph>> {
 
 		StringBuilder bld = new StringBuilder();
 		bld.append(hostCount);
-		bld.append("host");
+		bld.append(" host");
 		if(hostCount > 1)
 			bld.append('s');
 		bld.append(" deployed");
 		if(hostsWithErrors > 0 || hostsWithWarnings > 0) {
-			bld.append('(');
+			bld.append(" (");
 			if(hostsWithErrors > 0) {
 				bld.append(hostsWithErrors);
 				bld.append(" with errors");
