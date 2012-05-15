@@ -88,7 +88,6 @@ public class Deployer extends Builder {
 		try {
 			PrintStream logger = listener.getLogger();
 
-			DeploymentDescriptor desc = getDescriptor();
 			ValidationDescriptor validationDesc = (ValidationDescriptor) Jenkins.getInstance().getDescriptorOrDie(
 				Validator.class);
 
@@ -128,14 +127,14 @@ public class Deployer extends Builder {
 			StackService stackService = factory.createStackService();
 			Repository repo = cloneResult.getResult();
 
-			long pollFrequency = desc.getPollFrequency();
+			long pollFrequency = validationDesc.getPollFrequency();
 			if(pollFrequency <= 0)
 				pollFrequency = 15;
 
 			long startTime = System.currentTimeMillis();
 			long lastPollTime = startTime;
 			long failTime = Long.MAX_VALUE;
-			long maxTime = desc.getMaxTime();
+			long maxTime = validationDesc.getMaxTime();
 			if(maxTime > 0)
 				failTime = startTime + maxTime * 1000;
 
@@ -175,7 +174,7 @@ public class Deployer extends Builder {
 
 			ResultWithDiagnostic<List<CatalogGraph>> deploymentResult = stackService.getDeploymentResult(jobIdentifier);
 
-			data.setDeploymentResult(deploymentResult);
+			data.setResult(deploymentResult);
 
 			if(deploymentResult.getSeverity() == Diagnostic.ERROR) {
 				listener.error(deploymentResult.toString());

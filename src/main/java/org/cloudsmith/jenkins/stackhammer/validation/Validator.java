@@ -110,7 +110,7 @@ public class Validator extends Builder {
 			ResultWithDiagnostic<String> validationResult = stackService.validateStack(repo, repo.getOwner() + "/" +
 					repo.getName());
 
-			data.setValidationDiagnostic(validationResult);
+			data.setResult(validationResult);
 
 			if(validationResult.getSeverity() == Diagnostic.ERROR) {
 				listener.error(validationResult.toString());

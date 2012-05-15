@@ -11,7 +11,8 @@
 	<artifactId>stackhammer</artifactId>
 	<packaging>hpi</packaging>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>StackHammer Jenkins plugin</name>
+	<name>Stack Hammer</name>
+	<description>Validates and deploys Puppet configurations using Cloudsmith Stack Hammer</description>
 	<url>http://wiki.jenkins-ci.org/display/JENKINS/StackHammer+Plugin</url>
 	<developers>
 		<developer>

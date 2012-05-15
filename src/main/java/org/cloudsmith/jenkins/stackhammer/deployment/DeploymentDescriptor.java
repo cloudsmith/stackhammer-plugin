@@ -13,10 +13,8 @@ package org.cloudsmith.jenkins.stackhammer.deployment;
 
 import hudson.Extension;
 import hudson.tasks.Builder;
-import net.sf.json.JSONObject;
 
 import org.cloudsmith.jenkins.stackhammer.common.StackOpDescriptor;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Descriptor for {@link Deployer}. Used as a singleton.
@@ -28,21 +26,8 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 @Extension
 public final class DeploymentDescriptor extends StackOpDescriptor<Builder> {
-	private int pollFrequency;
-
-	private int maxTime;
-
 	public DeploymentDescriptor() {
 		super(Deployer.class);
-		load();
-	}
-
-	@Override
-	public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-		pollFrequency = formData.getInt("pollFrequency");
-		maxTime = formData.getInt("maxTime");
-		save();
-		return super.configure(req, formData);
 	}
 
 	/**
@@ -51,19 +36,5 @@ public final class DeploymentDescriptor extends StackOpDescriptor<Builder> {
 	@Override
 	public String getDisplayName() {
 		return "Stack Hammer Deployment";
-	}
-
-	/**
-	 * This method returns the max time from the global configuration
-	 */
-	public int getMaxTime() {
-		return maxTime;
-	}
-
-	/**
-	 * This method returns the poll frequency from the global configuration
-	 */
-	public int getPollFrequency() {
-		return pollFrequency;
 	}
 }

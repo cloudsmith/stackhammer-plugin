@@ -21,9 +21,18 @@
 			<j:choose>
 				<j:when test="${it.hostEntryCount != 0}">
 					<j:forEach var="hostEntry" items="${it.hostEntries}">
-						<a href="javascript:showOrHideElement('host-${hostEntry.name}')">hide/expand host &quot;${hostEntry.name}&quot;</a>
+						<a href="javascript:showOrHideElement('host-${hostEntry.name}')">expand/collapse host &quot;${hostEntry.name}&quot;</a>
 						<div id="host-${hostEntry.name}">
 							<h2>${hostEntry.displayName}</h2>
+							<j:choose>
+								<j:when test="${hostEntry.catalogGraphURL != null}">
+									<a href="${hostEntry.catalogGraphURL}" target="_blank">Catalog Graph</a>
+								</j:when>
+								<j:otherwise>
+									No dependency graph was generated
+								</j:otherwise>
+							</j:choose>
+							<br/>
 							<h3>Deployment Log</h3>
 							<j:choose>
 								<j:when test="${hostEntry.logEntryCount != 0}">
@@ -31,7 +40,7 @@
 										<thead>
 											<tr>
 												<td class="pane-header">Severity</td>
-												<td class="pane-header">Message</td>
+												<td class="pane-header">Description</td>
 											</tr>
 										</thead>
 										<tbody>
@@ -47,10 +56,6 @@
 								<j:otherwise>The deploy did not produce any log output
 								</j:otherwise>
 							</j:choose>
-							<j:if test="${hostEntry.catalogGraphURL != null}">
-								<h2>Catalog Graph</h2>
-								<a href="${hostEntry.catalogGraphURL}">Catalog Graph</a>
-							</j:if>
 						</div>
 					</j:forEach>
 				</j:when>

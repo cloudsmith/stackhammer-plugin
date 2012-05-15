@@ -1,12 +1,9 @@
 package org.cloudsmith.jenkins.stackhammer.deployment;
 
 import hudson.Functions;
-import hudson.model.Action;
-import hudson.model.Api;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,17 +13,16 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.cloudsmith.jenkins.stackhammer.common.GraphTrimmer;
+import org.cloudsmith.jenkins.stackhammer.common.StackOpResult;
 import org.cloudsmith.stackhammer.api.model.CatalogGraph;
 import org.cloudsmith.stackhammer.api.model.LogEntry;
-import org.cloudsmith.stackhammer.api.model.Repository;
 import org.cloudsmith.stackhammer.api.model.ResultWithDiagnostic;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.ExportedBean;
 
 @ExportedBean(defaultVisibility = 999)
-public class DeploymentResult implements Action, Serializable, Cloneable {
+public class DeploymentResult extends StackOpResult<List<CatalogGraph>> {
 	public static class HostEntry {
 		private final CatalogGraph catalogGraph;
 
@@ -81,11 +77,7 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 		}
 	}
 
-	private static final long serialVersionUID = 264848698476660935L;
-
-	private ResultWithDiagnostic<Repository> cloneDiagnostic;
-
-	private ResultWithDiagnostic<List<CatalogGraph>> deploymentDiagnostic;
+	private static final long serialVersionUID = 6226198097084585053L;
 
 	private List<LogEntry> logEntries;
 
@@ -100,6 +92,8 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 			logEntries = new ArrayList<LogEntry>(newLogEntries);
 		else
 			logEntries.addAll(newLogEntries);
+
+		// Invalidate cached entries if any
 		hostEntries = null;
 		logEntriesPerHost = null;
 		logEntriesPerMachine = null;
@@ -138,7 +132,7 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 						OutputStream out = rsp.getOutputStream();
 						try {
 							byte[] svgData = Base64.decodeBase64(graph.getCatalogGraph());
-							svgData = GraphTrimmer.stripFixedSize(svgData);
+							// svgData = GraphTrimmer.stripFixedSize(svgData);
 							rsp.setContentLength(svgData.length);
 							out.write(svgData);
 							return;
@@ -153,12 +147,9 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 		rsp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
-	public Api getApi() {
-		return new Api(this);
-	}
-
+	@Override
 	public String getDisplayName() {
-		return "Deployment Diagnostics";
+		return "Deployment Report";
 	}
 
 	public synchronized List<HostEntry> getHostEntries() {
@@ -166,12 +157,13 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 			return hostEntries;
 
 		List<HostEntry> result = new ArrayList<HostEntry>();
+		List<CatalogGraph> graphs = getResult();
 		for(Map.Entry<String, List<LogEntry>> logEntries : getLogEntriesPerHost().entrySet()) {
 			String hostName = logEntries.getKey();
 			String machineName = null;
 			CatalogGraph catalogGraph = null;
-			if(deploymentDiagnostic != null) {
-				for(CatalogGraph cg : deploymentDiagnostic.getResult()) {
+			if(graphs != null) {
+				for(CatalogGraph cg : graphs) {
 					if(hostName.equals(cg.getNodeName())) {
 						catalogGraph = cg;
 						machineName = cg.getInstanceID();
@@ -193,8 +185,8 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 
 		// In the unlikely event that we have a catalog graph for which no log
 		// has been produced
-		if(deploymentDiagnostic != null) {
-			for(CatalogGraph cg : deploymentDiagnostic.getResult()) {
+		if(graphs != null) {
+			for(CatalogGraph cg : graphs) {
 				if(getLogEntriesPerHost().containsKey(cg.getNodeName()))
 					continue;
 				result.add(new HostEntry(cg.getNodeName(), cg.getInstanceID(), cg, Collections.<LogEntry> emptyList()));
@@ -212,29 +204,39 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 		return getHostEntries().size();
 	}
 
+	@Override
 	public String getIconFileName() {
 		return Functions.getResourcePath() + "/plugin/stackhammer/icons/hammer-32x32.png";
+	}
+
+	@Override
+	public String getLargeIconFileName() {
+		return "/plugin/stackhammer/icons/hammer-48x48.png";
+	}
+
+	public List<LogEntry> getLogEntries() {
+		return logEntries == null
+				? Collections.<LogEntry> emptyList()
+				: logEntries;
 	}
 
 	private synchronized Map<String, List<LogEntry>> getLogEntriesPerHost() {
 		if(logEntriesPerHost != null)
 			return logEntriesPerHost;
 
-		if(logEntries != null) {
-			for(LogEntry le : logEntries) {
-				String hostName = le.getLogicalOrigin();
-				if(hostName == null)
-					continue;
+		for(LogEntry le : getLogEntries()) {
+			String hostName = le.getLogicalOrigin();
+			if(hostName == null)
+				continue;
 
-				if(logEntriesPerHost == null)
-					logEntriesPerHost = new HashMap<String, List<LogEntry>>();
-				List<LogEntry> hostEntries = logEntriesPerHost.get(hostName);
-				if(hostEntries == null) {
-					hostEntries = new ArrayList<LogEntry>();
-					logEntriesPerHost.put(hostName, hostEntries);
-				}
-				hostEntries.add(le);
+			if(logEntriesPerHost == null)
+				logEntriesPerHost = new HashMap<String, List<LogEntry>>();
+			List<LogEntry> hostEntries = logEntriesPerHost.get(hostName);
+			if(hostEntries == null) {
+				hostEntries = new ArrayList<LogEntry>();
+				logEntriesPerHost.put(hostName, hostEntries);
 			}
+			hostEntries.add(le);
 		}
 		if(logEntriesPerHost == null)
 			logEntriesPerHost = Collections.emptyMap();
@@ -249,39 +251,31 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 		if(logEntriesPerMachine != null)
 			return logEntriesPerMachine;
 
-		if(logEntries != null) {
-			for(LogEntry le : logEntries) {
-				if(le.getLogicalOrigin() != null)
-					continue;
+		for(LogEntry le : getLogEntries()) {
+			if(le.getLogicalOrigin() != null)
+				continue;
 
-				String machineName = le.getPhysicalOrigin();
-				if(machineName == null)
-					continue;
+			String machineName = le.getPhysicalOrigin();
+			if(machineName == null)
+				continue;
 
-				if(logEntriesPerMachine == null)
-					logEntriesPerMachine = new HashMap<String, List<LogEntry>>();
+			if(logEntriesPerMachine == null)
+				logEntriesPerMachine = new HashMap<String, List<LogEntry>>();
 
-				List<LogEntry> machineEntries = logEntriesPerMachine.get(machineName);
-				if(machineEntries == null) {
-					machineEntries = new ArrayList<LogEntry>();
-					logEntriesPerMachine.put(machineName, machineEntries);
-				}
-				machineEntries.add(le);
+			List<LogEntry> machineEntries = logEntriesPerMachine.get(machineName);
+			if(machineEntries == null) {
+				machineEntries = new ArrayList<LogEntry>();
+				logEntriesPerMachine.put(machineName, machineEntries);
 			}
+			machineEntries.add(le);
 		}
 		if(logEntriesPerMachine == null)
 			logEntriesPerMachine = Collections.emptyMap();
 		return logEntriesPerMachine;
 	}
 
-	public String getStackBase() {
-		if(cloneDiagnostic == null)
-			return null;
-
-		Repository repo = cloneDiagnostic.getResult();
-		return repo == null
-				? null
-				: repo.getProvider().getRepositoryBase(repo.getOwner(), repo.getName(), repo.getBranch());
+	public String getSummary() {
+		return getSummary(getLogEntries());
 	}
 
 	@Override
@@ -290,17 +284,11 @@ public class DeploymentResult implements Action, Serializable, Cloneable {
 	}
 
 	/**
-	 * @param cloneDiagnostic the cloneDiagnostic to set
-	 */
-	public void setCloneDiagnostic(ResultWithDiagnostic<Repository> cloneDiagnostic) {
-		this.cloneDiagnostic = cloneDiagnostic;
-	}
-
-	/**
 	 * @param validationDiagnostic the validationDiagnostic to set
 	 */
-	public void setDeploymentResult(ResultWithDiagnostic<List<CatalogGraph>> deploymentResult) {
-		this.deploymentDiagnostic = deploymentResult;
+	@Override
+	public void setResult(ResultWithDiagnostic<List<CatalogGraph>> resultDiagnostic) {
+		super.setResult(resultDiagnostic);
 		hostEntries = null;
 	}
 }

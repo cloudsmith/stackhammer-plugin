@@ -3,35 +3,33 @@
 
 	<l:layout title="Stack Hammer">
 		<l:main-panel>
-		   <script type="text/javascript">
-		      function showOrHideElement(id) {
-		         var element = document.getElementById(id);
-		         if (document.getElementById(id).style.display == "none") {
-		            document.getElementById(id).style.display = "";
-		         } else if (document.getElementById(id).style.display == "") {
-		            document.getElementById(id).style.display = "none";
-		         }
-		      }
-		   </script>
-		
-			<h1>Stack Hammer Validation Diagnostics</h1>
+			<h1>Stack Hammer Validation Report</h1>
+			<j:choose>
+				<j:when test="${it.validationGraphURL != null}">
+					<a href="${it.validationGraphURL}" target="_blank">Dependency Graph</a>
+				</j:when>
+				<j:otherwise>
+					No dependency graph was generated
+				</j:otherwise>
+			</j:choose>
+			<br/>
 			<h2>Errors and Warnings</h2>
 			<j:choose>
-				<j:when test="${it.validationDiagnosticsCount != 0}">
-					<a href="javascript:showOrHideElement('validationDiagnosticsTable')">hide/expand the table</a>
+				<j:when test="${it.resultDiagnosticsCount != 0}">
 					<table id="validationDiagnosticsTable" border="1px" class="pane sortable">
 						<thead>
 							<tr>
 								<td class="pane-header">Severity</td>
-								<td class="pane-header">Resource</td>
-								<td class="pane-header">Message</td>
+								<td class="pane-header">Description</td>
+								<td class="pane-header">Location</td>
 							</tr>
 						</thead>
 						<tbody>
-							<j:forEach var="diag" items="${it.validationDiagnostics}">
+							<j:forEach var="diag" items="${it.resultDiagnostics}">
 								<j:if test="${diag.resourcePath != null}">
 									<tr>
-										<td>${diag.severityString}:</td>
+										<td>${diag.severityString}</td>
+										<td>${diag.message}</td>
 										<td>
 											<j:choose>
 												<j:when test="${diag.line != 0}">
@@ -42,7 +40,6 @@
 												</j:otherwise>
 											</j:choose>
 										</td>
-										<td>${diag.message}</td>
 									</tr>
 								</j:if>
 							</j:forEach>
@@ -51,9 +48,6 @@
 				</j:when>
 				<j:otherwise>The validation did not produce any diagnostics</j:otherwise>
 			</j:choose>
-			<h2>Dependency Graph</h2>
-			<a href="javascript:showOrHideElement('validationGraph')">hide/expand the graph</a><br/>
-			<object id="validationGraph" data="${it.validationGraphURL}" width="98%"/>
 		</l:main-panel>
 	</l:layout>
 </j:jelly>

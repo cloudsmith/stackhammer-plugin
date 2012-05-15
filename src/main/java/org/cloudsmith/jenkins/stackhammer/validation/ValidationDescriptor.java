@@ -39,6 +39,10 @@ import org.kohsuke.stapler.StaplerRequest;
 public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 	private String serverURL;
 
+	private int pollFrequency;
+
+	private int maxTime;
+
 	public ValidationDescriptor() {
 		super(Validator.class);
 		load();
@@ -46,6 +50,8 @@ public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 
 	@Override
 	public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+		pollFrequency = formData.getInt("pollFrequency");
+		maxTime = formData.getInt("maxTime");
 		serverURL = formData.getString("serverURL");
 		save();
 		return super.configure(req, formData);
@@ -82,6 +88,20 @@ public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 	@Override
 	public String getDisplayName() {
 		return "Stack Hammer Validation";
+	}
+
+	/**
+	 * This method returns the max time from the global configuration
+	 */
+	public int getMaxTime() {
+		return maxTime;
+	}
+
+	/**
+	 * This method returns the poll frequency from the global configuration
+	 */
+	public int getPollFrequency() {
+		return pollFrequency;
 	}
 
 	/**

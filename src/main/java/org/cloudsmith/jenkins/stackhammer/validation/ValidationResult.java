@@ -1,36 +1,25 @@
 package org.cloudsmith.jenkins.stackhammer.validation;
 
 import hudson.Functions;
-import hudson.model.Action;
 import hudson.model.AbstractBuild;
-import hudson.model.Api;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.cloudsmith.jenkins.stackhammer.common.GraphTrimmer;
-import org.cloudsmith.stackhammer.api.model.Diagnostic;
+import org.cloudsmith.jenkins.stackhammer.common.StackOpResult;
 import org.cloudsmith.stackhammer.api.model.Repository;
-import org.cloudsmith.stackhammer.api.model.ResultWithDiagnostic;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.ExportedBean;
 
 @ExportedBean(defaultVisibility = 999)
-public class ValidationResult implements Action, Serializable, Cloneable {
+public class ValidationResult extends StackOpResult<String> {
 	private static final long serialVersionUID = 264848698476660935L;
 
 	private final AbstractBuild<?, ?> build;
-
-	private ResultWithDiagnostic<Repository> cloneDiagnostic;
-
-	private ResultWithDiagnostic<String> validationDiagnostic;
 
 	public ValidationResult(AbstractBuild<?, ?> build) {
 		this.build = build;
@@ -43,7 +32,7 @@ public class ValidationResult implements Action, Serializable, Cloneable {
 			clone = (ValidationResult) super.clone();
 		}
 		catch(CloneNotSupportedException e) {
-			throw new RuntimeException("Error cloning BuildData", e);
+			throw new RuntimeException("Error cloning ValidationResult", e);
 		}
 		return clone;
 	}
@@ -59,12 +48,13 @@ public class ValidationResult implements Action, Serializable, Cloneable {
 	 */
 	public void doDependencyGraph(StaplerRequest req, StaplerResponse rsp) throws IOException {
 		String name = req.getRestOfPath();
-		if((name == null || name.isEmpty()) && validationDiagnostic != null && validationDiagnostic.getResult() != null) {
+		String result = getResult();
+		if((name == null || name.isEmpty()) && result != null) {
 			rsp.setContentType("image/svg+xml");
 			OutputStream out = rsp.getOutputStream();
 			try {
-				byte[] svgData = Base64.decodeBase64(validationDiagnostic.getResult());
-				svgData = GraphTrimmer.stripFixedSize(svgData);
+				byte[] svgData = Base64.decodeBase64(result);
+				// svgData = GraphTrimmer.stripFixedSize(svgData);
 				rsp.setContentLength(svgData.length);
 				out.write(svgData);
 				return;
@@ -76,36 +66,35 @@ public class ValidationResult implements Action, Serializable, Cloneable {
 		rsp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
-	public Api getApi() {
-		return new Api(this);
-	}
-
 	public String getDisplayName() {
-		return "Validation Diagnostics";
+		return "Validation Report";
 	}
 
+	@Override
 	public String getIconFileName() {
 		return Functions.getResourcePath() + "/plugin/stackhammer/icons/hammer-32x32.png";
 	}
 
-	public String getStackBase() {
-		if(cloneDiagnostic == null)
-			return null;
+	@Override
+	public String getLargeIconFileName() {
+		return "/plugin/stackhammer/icons/hammer-48x48.png";
+	}
 
-		Repository repo = cloneDiagnostic.getResult();
+	public String getStackBase() {
+		Repository repo = getRepository();
 		return repo == null
 				? null
 				: repo.getProvider().getRepositoryBase(repo.getOwner(), repo.getName(), repo.getBranch());
 	}
 
-	public String getSummaryValidationGraphURL() {
-		return validationDiagnostic != null && validationDiagnostic.getResult() != null
-				? getUrlFor("dependencyGraph")
-				: null;
+	public String getSummary() {
+		return getSummary(getResultDiagnostics());
 	}
 
-	private String getUrlFor(String item) {
-		return getUrlName() + '/' + item;
+	public String getSummaryValidationGraphURL() {
+		return getResult() != null
+				? getUrlFor("dependencyGraph")
+				: null;
 	}
 
 	@Override
@@ -113,29 +102,9 @@ public class ValidationResult implements Action, Serializable, Cloneable {
 		return "stackhammerValidation";
 	}
 
-	public List<Diagnostic> getValidationDiagnostics() {
-		return validationDiagnostic == null
-				? Collections.<Diagnostic> emptyList()
-				: validationDiagnostic.getChildren();
-	}
-
 	public String getValidationGraphURL() {
-		return validationDiagnostic != null && validationDiagnostic.getResult() != null
+		return getResult() != null
 				? "dependencyGraph"
 				: null;
-	}
-
-	/**
-	 * @param cloneDiagnostic the cloneDiagnostic to set
-	 */
-	public void setCloneDiagnostic(ResultWithDiagnostic<Repository> cloneDiagnostic) {
-		this.cloneDiagnostic = cloneDiagnostic;
-	}
-
-	/**
-	 * @param validationDiagnostic the validationDiagnostic to set
-	 */
-	public void setValidationDiagnostic(ResultWithDiagnostic<String> validationDiagnostic) {
-		this.validationDiagnostic = validationDiagnostic;
 	}
 }
