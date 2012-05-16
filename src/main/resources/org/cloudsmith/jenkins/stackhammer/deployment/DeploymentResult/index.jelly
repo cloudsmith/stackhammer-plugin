@@ -5,13 +5,13 @@
 		<l:main-panel>
 			<script type="text/javascript">
 				function showOrHideElement(id) {
-					var element = document.getElementById(id);
-					var style = element.style;
-					if(style.display == "none") {
-						style.display = "";
-					} else if(style.display == "") {
-						style.display = "none";
-					}
+				var element = document.getElementById(id);
+				var style = element.style;
+				if(style.display == "none") {
+				style.display = "";
+				} else if(style.display == "") {
+				style.display = "none";
+				}
 				}
 			</script>
 
@@ -24,13 +24,14 @@
 							<h2>${hostEntry.displayName}</h2>
 							<j:choose>
 								<j:when test="${hostEntry.catalogGraphURL != null}">
-									<a href="${hostEntry.catalogGraphURL}" target="_blank">Catalog Graph</a>
+									<a href="${hostEntry.catalogGraphURL}" target="_blank">Catalog Graph
+									</a>
 								</j:when>
 								<j:otherwise>
 									No catalog graph was generated
 								</j:otherwise>
 							</j:choose>
-							<br/>
+							<br />
 							<h3>Logs</h3>
 							<j:choose>
 								<j:when test="${hostEntry.logEntryCount != 0}">
@@ -45,7 +46,16 @@
 											<j:forEach var="logEntry" items="${hostEntry.logEntries}">
 												<tr>
 													<td style="width:70px;">${logEntry.severityString}</td>
-													<td style="overflow:hidden;text-overflow:ellipsis">${logEntry.message}</td>
+													<j:choose>
+														<j:when test="${logEntry.details != null}">
+															<td style="overflow:hidden;text-overflow:ellipsis">
+																<div title="${logEntry.details}">${logEntry.message}</div>
+															</td>
+														</j:when>
+														<j:otherwise>
+															<td style="overflow:hidden;text-overflow:ellipsis">${logEntry.message}</td>
+														</j:otherwise>
+													</j:choose>
 												</tr>
 											</j:forEach>
 										</tbody>

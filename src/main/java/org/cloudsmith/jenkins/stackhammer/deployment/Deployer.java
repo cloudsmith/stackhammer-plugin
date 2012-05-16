@@ -123,6 +123,7 @@ public class Deployer extends Builder {
 				listener.error(cloneResult.toString());
 				return false;
 			}
+			cloneResult.log(logger);
 
 			StackService stackService = factory.createStackService();
 			Repository repo = cloneResult.getResult();
@@ -180,6 +181,7 @@ public class Deployer extends Builder {
 				listener.error(deploymentResult.toString());
 				return false;
 			}
+			deploymentResult.log(logger);
 		}
 		catch(Exception e) {
 			e.printStackTrace(listener.error("Exception during deployment of %s", getStackName()));

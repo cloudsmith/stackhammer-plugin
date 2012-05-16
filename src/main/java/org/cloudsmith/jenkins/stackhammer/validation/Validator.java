@@ -102,6 +102,7 @@ public class Validator extends Builder {
 				listener.error(cloneResult.toString());
 				return false;
 			}
+			cloneResult.log(logger);
 
 			StackService stackService = factory.createStackService();
 			Repository repo = cloneResult.getResult();
@@ -116,6 +117,7 @@ public class Validator extends Builder {
 				listener.error(validationResult.toString());
 				return false;
 			}
+			validationResult.log(logger);
 		}
 		catch(Exception e) {
 			e.printStackTrace(listener.error("Exception during validation of %s", getStackName()));
