@@ -14,6 +14,6 @@
     <f:textbox />
   </f:entry>
   <f:entry title="API Access Key" field="accessKey">
-    <f:textbox />
+    <f:password />
   </f:entry>
 </j:jelly>
