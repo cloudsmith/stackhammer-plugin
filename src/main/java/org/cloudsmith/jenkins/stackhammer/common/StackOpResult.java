@@ -77,12 +77,20 @@ public abstract class StackOpResult<T> implements Action, Serializable, Cloneabl
 		if(errorCount == 0) {
 			if(warningCount == 0)
 				return "No errors or warnings";
-			return warningCount + " warnings";
+			return warningCount + (warningCount > 1
+					? " warnings"
+					: " warning");
 		}
 
 		if(warningCount == 0)
-			return errorCount + " errors";
-		return errorCount + " errors and " + warningCount + " warnings";
+			return errorCount + (errorCount > 1
+					? " errors"
+					: " error");
+		return errorCount + (errorCount > 1
+				? " errors and "
+				: " error and ") + warningCount + (warningCount > 1
+				? " warnings"
+				: " warning");
 	}
 
 	protected String getUrlFor(String item) {
