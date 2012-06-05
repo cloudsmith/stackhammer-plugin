@@ -3,17 +3,17 @@
     This Jelly script is used to produce the global configuration option.
   -->
   <f:section title="Stack Hammer">
-    <f:entry title="Stack Hammer URL" field="serverURL"
+    <f:entry title="Service URL" field="serviceURL"
       description="The URL for the Stack Hammer service API.">
-      <f:textbox />
+      <f:textbox default="https://stackservice.cloudsmith.com/service/api"/>
     </f:entry>
-    <f:entry title="Poll Interval" field="pollFrequency"
-      description="The number of seconds between polls for long-running operations. Defaults to 15 seconds.">
-      <f:textbox />
+    <f:entry title="Poll Interval" field="pollInterval"
+      description="The number of seconds between polls for long-running operations.">
+      <f:textbox default="15"/>
     </f:entry>
     <f:entry title="Deployment Timeout" field="maxTime"
       description="The maximum number of seconds to poll for completion of deployment operations.">
-      <f:textbox />
+      <f:textbox/>
     </f:entry>
   </f:section>
 </j:jelly>

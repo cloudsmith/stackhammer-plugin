@@ -29,16 +29,16 @@ public abstract class StackOpDescriptor<T extends BuildStep & Describable<T>> ex
 	}
 
 	/**
-	 * Performs on-the-fly validation of the form field 'stackName'.
+	 * Performs on-the-fly validation of the form field 'stack'.
 	 * 
 	 * @param value
 	 *        This parameter receives the value that the user has typed.
 	 * @return
 	 *         Indicates the outcome of the validation. This is sent to the browser.
 	 */
-	public FormValidation doCheckStackName(@QueryParameter String value) throws IOException, ServletException {
+	public FormValidation doCheckStack(@QueryParameter String value) throws IOException, ServletException {
 		if(value.length() == 0)
-			return FormValidation.error("Please set a stack name");
+			return FormValidation.error("Please specify a stack");
 		String[] split = value.trim().split("/");
 		if(split.length == 2) {
 			String owner = split[0].trim();
@@ -47,7 +47,7 @@ public abstract class StackOpDescriptor<T extends BuildStep & Describable<T>> ex
 				return FormValidation.ok();
 			}
 		}
-		return FormValidation.error("Stack name must be in the form <owner>/<name>");
+		return FormValidation.error("Stack must be in the form <owner>/<name>");
 	}
 
 	/**

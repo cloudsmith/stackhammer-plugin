@@ -44,20 +44,20 @@ import com.google.inject.Injector;
  */
 public class Deployer extends Builder {
 
-	private final boolean dryRun;
+	private final Boolean dryRun;
 
 	private final String branch;
 
-	private final String stackName;
+	private final String stack;
 
-	private final String accessKey;
+	private final String apiKey;
 
 	@DataBoundConstructor
-	public Deployer(String stackName, boolean dryRun, String branch, String accessKey) {
-		this.stackName = stackName;
+	public Deployer(String stack, Boolean dryRun, String branch, String apiKey) {
+		this.stack = stack;
 		this.dryRun = dryRun;
 		this.branch = branch;
-		this.accessKey = accessKey;
+		this.apiKey = apiKey;
 	}
 
 	private void emitLogEntries(List<LogEntry> logEntries, DeploymentResult data, PrintStream logger) {
@@ -66,8 +66,8 @@ public class Deployer extends Builder {
 		data.addLogEntries(logEntries);
 	}
 
-	public String getAccessKey() {
-		return accessKey;
+	public String getApiKey() {
+		return apiKey;
 	}
 
 	public String getBranch() {
@@ -79,8 +79,12 @@ public class Deployer extends Builder {
 		return (DeploymentDescriptor) super.getDescriptor();
 	}
 
-	public String getStackName() {
-		return stackName;
+	public Boolean getDryRun() {
+		return dryRun;
+	}
+
+	public String getStack() {
+		return stack;
 	}
 
 	@Override
@@ -91,24 +95,21 @@ public class Deployer extends Builder {
 			ValidationDescriptor validationDesc = (ValidationDescriptor) Jenkins.getInstance().getDescriptorOrDie(
 				Validator.class);
 
-			String serverURL = validationDesc.getServerURL();
-			if(serverURL == null)
-				serverURL = "https://stackservice.cloudsmith.com/service/api";
-
+			String serverURL = validationDesc.getServiceURL();
 			URI uri = URI.create(serverURL);
 			logger.format(
-				"Using parameters%n scheme=%s%n host=%s%n port=%s%n prefix=%s%n token=%s%n", uri.getScheme(),
-				uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey());
+				"Using parameters%n scheme=%s%n host=%s%n port=%s%n prefix=%s%n", uri.getScheme(), uri.getHost(),
+				uri.getPort(), uri.getPath());
 
 			Injector injector = Guice.createInjector(new StackHammerModule(
-				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey()));
+				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getApiKey()));
 
 			DeploymentResult data = new DeploymentResult();
 			build.addAction(data);
 
 			StackHammerFactory factory = injector.getInstance(StackHammerFactory.class);
 			RepositoryService repoService = factory.createRepositoryService();
-			String[] splitName = getStackName().split("/");
+			String[] splitName = getStack().split("/");
 			String owner = splitName[0];
 			String name = splitName[1];
 			logger.format(
@@ -128,16 +129,25 @@ public class Deployer extends Builder {
 			StackService stackService = factory.createStackService();
 			Repository repo = cloneResult.getResult();
 
-			long pollFrequency = validationDesc.getPollFrequency();
-			if(pollFrequency <= 0)
-				pollFrequency = 15;
+			Integer pollIntervalObj = validationDesc.getPollInterval();
+			long pollInterval = pollIntervalObj == null
+					? 0
+					: pollIntervalObj.longValue();
+
+			if(pollInterval < 1)
+				pollInterval = 1;
 
 			long startTime = System.currentTimeMillis();
 			long lastPollTime = startTime;
 			long failTime = Long.MAX_VALUE;
-			long maxTime = validationDesc.getMaxTime();
-			if(maxTime > 0)
-				failTime = startTime + maxTime * 1000;
+			Integer maxTimeObj = validationDesc.getMaxTime();
+			if(maxTimeObj != null && maxTimeObj.longValue() > 0)
+				failTime = startTime + maxTimeObj.longValue() * 1000;
+
+			Boolean dryRunObj = getDryRun();
+			boolean dryRun = dryRunObj == null
+					? false
+					: dryRunObj.booleanValue();
 
 			String jobIdentifier = stackService.deployStack(repo, repo.getOwner() + "/" + repo.getName(), dryRun);
 
@@ -145,11 +155,11 @@ public class Deployer extends Builder {
 			for(;;) {
 				long now = System.currentTimeMillis();
 				if(now > failTime) {
-					logger.format("Job didn't finish in time. Max time is %s seconds%n", maxTime);
+					logger.format("Job didn't finish in time.%n");
 					return false;
 				}
 
-				long sleepTime = (lastPollTime + pollFrequency * 1000) - now;
+				long sleepTime = (lastPollTime + pollInterval * 1000) - now;
 				if(sleepTime > 0)
 					Thread.sleep(sleepTime);
 
@@ -184,7 +194,7 @@ public class Deployer extends Builder {
 			deploymentResult.log(logger);
 		}
 		catch(Exception e) {
-			e.printStackTrace(listener.error("Exception during deployment of %s", getStackName()));
+			e.printStackTrace(listener.error("Exception during deployment of %s", getStack()));
 			return false;
 		}
 		return true;

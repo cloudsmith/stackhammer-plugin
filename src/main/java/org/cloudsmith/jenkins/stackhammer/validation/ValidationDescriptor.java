@@ -37,11 +37,11 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 @Extension
 public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
-	private String serverURL;
+	private String serviceURL;
 
-	private int pollFrequency;
+	private Integer pollInterval;
 
-	private int maxTime;
+	private Integer maxTime;
 
 	public ValidationDescriptor() {
 		super(Validator.class);
@@ -50,15 +50,68 @@ public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 
 	@Override
 	public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-		pollFrequency = formData.getInt("pollFrequency");
-		maxTime = formData.getInt("maxTime");
-		serverURL = formData.getString("serverURL");
+		String pollInterval = formData.getString("pollInterval");
+		if(pollInterval != null && pollInterval.length() > 0)
+			this.pollInterval = Integer.valueOf(pollInterval);
+
+		String maxTime = formData.getString("maxTime");
+		if(maxTime != null && maxTime.length() > 0)
+			this.maxTime = Integer.valueOf(maxTime);
+		serviceURL = formData.getString("serviceURL");
+
 		save();
 		return super.configure(req, formData);
 	}
 
 	/**
-	 * Performs on-the-fly validation of the form field 'serverURL'.
+	 * Performs on-the-fly validation of the form field 'maxTime'.
+	 * 
+	 * @param value
+	 *        This parameter receives the value that the user has typed.
+	 * @return
+	 *         Indicates the outcome of the validation. This is sent to the browser.
+	 */
+	public FormValidation doCheckMaxTime(@QueryParameter String value) throws IOException, ServletException {
+		if(value.length() == 0)
+			// This is OK, we'll use the default
+			return FormValidation.ok();
+
+		try {
+			Integer intVal = Integer.valueOf(value);
+			if(intVal.intValue() < 30)
+				return FormValidation.error("The timeout must be larger than 30 seconds");
+			return FormValidation.ok();
+		}
+		catch(NumberFormatException e) {
+			return FormValidation.error("The timeout must be a positive integer value");
+		}
+	}
+
+	/**
+	 * Performs on-the-fly validation of the form field 'pollInterval'.
+	 * 
+	 * @param value
+	 *        This parameter receives the value that the user has typed.
+	 * @return
+	 *         Indicates the outcome of the validation. This is sent to the browser.
+	 */
+	public FormValidation doCheckPollInterval(@QueryParameter String value) throws IOException, ServletException {
+		if(value.length() == 0)
+			// This is OK, we'll use the default
+			return FormValidation.ok();
+
+		try {
+			Integer intVal = Integer.valueOf(value);
+			if(intVal.intValue() > 0)
+				return FormValidation.ok();
+		}
+		catch(NumberFormatException e) {
+		}
+		return FormValidation.error("The poll interval must be a positive integer value");
+	}
+
+	/**
+	 * Performs on-the-fly validation of the form field 'serviceURL'.
 	 * 
 	 * @param value
 	 *        This parameter receives the value that the user has typed.
@@ -75,10 +128,10 @@ public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 			String scheme = uri.getScheme();
 			if("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
 				return FormValidation.ok();
-			return FormValidation.error("The Server URL must use http or https");
+			return FormValidation.error("The Service URL must use http or https");
 		}
 		catch(URISyntaxException e) {
-			return FormValidation.error("The Server URL is not syntactially correct: %s", e.getMessage());
+			return FormValidation.error("The Service URL is not syntactially correct: %s", e.getMessage());
 		}
 	}
 
@@ -93,21 +146,21 @@ public final class ValidationDescriptor extends StackOpDescriptor<Builder> {
 	/**
 	 * This method returns the max time from the global configuration
 	 */
-	public int getMaxTime() {
+	public Integer getMaxTime() {
 		return maxTime;
 	}
 
 	/**
-	 * This method returns the poll frequency from the global configuration
+	 * This method returns the poll interval from the global configuration
 	 */
-	public int getPollFrequency() {
-		return pollFrequency;
+	public Integer getPollInterval() {
+		return pollInterval;
 	}
 
 	/**
-	 * This method returns the serverURL of the global configuration.
+	 * This method returns the serviceURL of the global configuration.
 	 */
-	public String getServerURL() {
-		return serverURL;
+	public String getServiceURL() {
+		return serviceURL;
 	}
 }

@@ -38,19 +38,19 @@ public class Validator extends Builder {
 
 	private final String branch;
 
-	private final String stackName;
+	private final String stack;
 
-	private final String accessKey;
+	private final String apiKey;
 
 	@DataBoundConstructor
-	public Validator(String stackName, String branch, String accessKey) {
-		this.stackName = stackName;
+	public Validator(String stack, String branch, String apiKey) {
+		this.stack = stack;
 		this.branch = branch;
-		this.accessKey = accessKey;
+		this.apiKey = apiKey;
 	}
 
-	public String getAccessKey() {
-		return accessKey;
+	public String getApiKey() {
+		return apiKey;
 	}
 
 	public String getBranch() {
@@ -62,32 +62,30 @@ public class Validator extends Builder {
 		return (ValidationDescriptor) super.getDescriptor();
 	}
 
-	public String getStackName() {
-		return stackName;
+	public String getStack() {
+		return stack;
 	}
 
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
 		try {
 			PrintStream logger = listener.getLogger();
-			String serverURL = getDescriptor().getServerURL();
-			if(serverURL == null)
-				serverURL = "https://stackservice.cloudsmith.com/service/api";
+			String serverURL = getDescriptor().getServiceURL();
 
 			URI uri = URI.create(serverURL);
 			logger.format(
-				"Using parameters%n scheme=%s%n host=%s%n port=%s%n prefix=%s%n token=%s%n", uri.getScheme(),
-				uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey());
+				"Using parameters%n scheme=%s%n host=%s%n port=%s%n prefix=%s%n", uri.getScheme(), uri.getHost(),
+				uri.getPort(), uri.getPath());
 
 			Injector injector = Guice.createInjector(new StackHammerModule(
-				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getAccessKey()));
+				uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), getApiKey()));
 
 			ValidationResult data = new ValidationResult(build);
 			build.addAction(data);
 
 			StackHammerFactory factory = injector.getInstance(StackHammerFactory.class);
 			RepositoryService repoService = factory.createRepositoryService();
-			String[] splitName = getStackName().split("/");
+			String[] splitName = getStack().split("/");
 			String owner = splitName[0];
 			String name = splitName[1];
 			logger.format(
@@ -120,7 +118,7 @@ public class Validator extends Builder {
 			validationResult.log(logger);
 		}
 		catch(Exception e) {
-			e.printStackTrace(listener.error("Exception during validation of %s", getStackName()));
+			e.printStackTrace(listener.error("Exception during validation of %s", getStack()));
 			return false;
 		}
 		return true;
