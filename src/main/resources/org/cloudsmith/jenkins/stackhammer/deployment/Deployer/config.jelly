@@ -13,7 +13,7 @@
   <f:entry title="Branch" field="branch">
     <f:textbox default="master"/>
   </f:entry>
-  <f:entry title="Dry run" field="dryRun">
+  <f:entry title="Dry Run" field="dryRun">
     <f:booleanRadio default="false"/>
   </f:entry>
   <f:entry title="API Key" field="apiKey">
